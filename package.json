@@ -3,11 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev:app": "cd app && pnpm dev",
-    "dev:backend": "cd backend && pnpm dev",
     "dev": "pnpm -r dev",
     "build": "pnpm -r build",
-    "start": "pnpm -r start"
+    "start": "pnpm -r start",
+    "addBack": "cd backend && pnpm add && cd ..",
+    "addBackDev": "cd backend && pnpm add -D && cd ..",
+    "addFront": "cd app && pnpm add && cd ..",
+    "addFrontDev": "cd app && pnpm add -D && cd .."
   },
   "packageManager": "pnpm@10.7.0"
 }

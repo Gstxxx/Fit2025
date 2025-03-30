@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
 import { differenceInDays, format, parseISO } from 'date-fns';
-import { Scale, TrendingDown, Target, Pencil, Trash2 } from 'lucide-react';
+import { Scale, TrendingDown, Target, Pencil, Trash2, Ruler } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
+import { weights } from '../services/api';
 
 interface WeightEntry {
     date: string;
@@ -10,21 +11,44 @@ interface WeightEntry {
 }
 
 const Dashboard: React.FC = () => {
-    const { isAuthenticated } = useAuth();
-    const [weightEntries, setWeightEntries] = useState<WeightEntry[]>(() => {
-        const saved = localStorage.getItem('weightEntries');
-        return saved ? JSON.parse(saved) : [];
-    });
+    const { isAuthenticated, user } = useAuth();
+    const [weightEntries, setWeightEntries] = useState<WeightEntry[]>([]);
     const [currentWeight, setCurrentWeight] = useState('');
     const [editingEntry, setEditingEntry] = useState<WeightEntry | null>(null);
+    const [height, setHeight] = useState(user?.height || '');
 
     const TARGET_DATE = new Date('2025-06-30');
     const INITIAL_WEIGHT = 154;
     const TARGET_WEIGHT = 134;
 
     useEffect(() => {
-        localStorage.setItem('weightEntries', JSON.stringify(weightEntries));
-    }, [weightEntries]);
+        fetchWeights();
+    }, []);
+
+    const fetchWeights = async () => {
+        try {
+            const data = await weights.getAll();
+            setWeightEntries(data);
+        } catch (error) {
+            console.error('Erro ao buscar pesos:', error);
+        }
+    };
+
+    const calculateBMI = (weight: number) => {
+        const userHeight = Number(height);
+        if (!userHeight || userHeight <= 0) return null;
+        const bmi = weight / (userHeight * userHeight);
+        return bmi.toFixed(1);
+    };
+
+    const getBMICategory = (bmi: number) => {
+        if (bmi < 18.5) return 'Abaixo do peso';
+        if (bmi < 24.9) return 'Peso normal';
+        if (bmi < 29.9) return 'Sobrepeso';
+        if (bmi < 34.9) return 'Obesidade grau 1';
+        if (bmi < 39.9) return 'Obesidade grau 2';
+        return 'Obesidade grau 3';
+    };
 
     const daysRemaining = differenceInDays(TARGET_DATE, new Date());
     const latestWeight = weightEntries.length > 0
@@ -32,27 +56,25 @@ const Dashboard: React.FC = () => {
         : INITIAL_WEIGHT;
     const totalWeightLoss = INITIAL_WEIGHT - latestWeight;
     const remainingWeight = latestWeight - TARGET_WEIGHT;
+    const currentBMI = calculateBMI(latestWeight);
+    const bmiCategory = currentBMI ? getBMICategory(parseFloat(currentBMI)) : null;
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!currentWeight) return;
 
-        if (editingEntry) {
-            setWeightEntries(weightEntries.map(entry =>
-                entry.date === editingEntry.date
-                    ? { ...entry, weight: parseFloat(currentWeight) }
-                    : entry
-            ));
-            setEditingEntry(null);
-        } else {
-            const newEntry = {
-                date: format(new Date(), 'yyyy-MM-dd'),
-                weight: parseFloat(currentWeight)
-            };
-            setWeightEntries([...weightEntries, newEntry]);
+        try {
+            if (editingEntry) {
+                // TODO: Implementar atualização
+                setEditingEntry(null);
+            } else {
+                await weights.create(parseFloat(currentWeight), new Date().toISOString());
+                await fetchWeights();
+            }
+            setCurrentWeight('');
+        } catch (error) {
+            console.error('Erro ao salvar peso:', error);
         }
-
-        setCurrentWeight('');
     };
 
     const handleEdit = (entry: WeightEntry) => {
@@ -60,8 +82,8 @@ const Dashboard: React.FC = () => {
         setCurrentWeight(entry.weight.toString());
     };
 
-    const handleDelete = (date: string) => {
-        setWeightEntries(weightEntries.filter(entry => entry.date !== date));
+    const handleDelete = async (date: string) => {
+        // TODO: Implementar deleção
         if (editingEntry?.date === date) {
             setEditingEntry(null);
             setCurrentWeight('');
@@ -73,11 +95,11 @@ const Dashboard: React.FC = () => {
     );
 
     const chartData = {
-        labels: weightEntries.map(entry => entry.date),
+        labels: sortedEntries.map(entry => format(parseISO(entry.date), 'dd/MM')),
         datasets: [
             {
                 label: 'Progresso de Peso',
-                data: weightEntries.map(entry => entry.weight),
+                data: sortedEntries.map(entry => entry.weight),
                 borderColor: 'rgb(75, 192, 192)',
                 tension: 0.1
             }
@@ -111,7 +133,7 @@ const Dashboard: React.FC = () => {
                     Jornada de Perda de Peso
                 </h1>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                     <div className="bg-blue-50 p-6 rounded-lg">
                         <div className="flex items-center gap-2 mb-2">
                             <Scale className="w-5 h-5 text-blue-600" />
@@ -137,6 +159,15 @@ const Dashboard: React.FC = () => {
                         </div>
                         <p className="text-3xl font-bold text-purple-600">{remainingWeight.toFixed(1)} kg</p>
                         <p className="text-sm text-gray-600">Para atingir a meta</p>
+                    </div>
+
+                    <div className="bg-orange-50 p-6 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                            <Ruler className="w-5 h-5 text-orange-600" />
+                            <h2 className="text-lg font-semibold">IMC Atual</h2>
+                        </div>
+                        <p className="text-3xl font-bold text-orange-600">{currentBMI || '--'}</p>
+                        <p className="text-sm text-gray-600">{bmiCategory || 'Altura não definida'}</p>
                     </div>
                 </div>
 
@@ -173,6 +204,7 @@ const Dashboard: React.FC = () => {
                                 <tr className="bg-gray-50">
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Peso (kg)</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IMC</th>
                                     {isAuthenticated && (
                                         <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                                     )}
@@ -186,6 +218,9 @@ const Dashboard: React.FC = () => {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             {entry.weight.toFixed(1)}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {calculateBMI(entry.weight) || '--'}
                                         </td>
                                         {isAuthenticated && (
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

@@ -7,24 +7,31 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:80"
-    restart: unless-stopped
+    volumes:
+      - ./app:/app
+      - /app/node_modules
+    depends_on:
+      - backend
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
-    restart: unless-stopped
-  mongo:
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    environment:
+      - DATABASE_URL=mongodb://mongodb:27017/fit2025
+      - JWT_SECRET=your-secret-key
+    depends_on:
+      - mongodb
+  mongodb:
     image: mongo:latest
     ports:
       - "27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: password
     volumes:
-      - mongodb_data_container:/data/db
-    restart: unless-stopped
+      - mongodb_data:/data/db
 
 volumes:
-  mongodb_data_container:
+  mongodb_data:

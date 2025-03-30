@@ -10,7 +10,7 @@ COPY tailwind.config.js ./
 COPY postcss.config.js ./
 
 # Instalar dependências
-RUN npm ci
+RUN npm install -g pnpm && pnpm install
 
 # Copiar código fonte
 COPY src/ ./src/
@@ -18,7 +18,7 @@ COPY public/ ./public/
 COPY index.html ./
 
 # Construir o aplicativo
-RUN npm run build
+RUN pnpm build
 
 # Estágio de produção
 FROM nginx:alpine
