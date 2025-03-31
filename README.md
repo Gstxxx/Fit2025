@@ -2,6 +2,12 @@
 
 Um aplicativo web para acompanhar sua jornada de perda de peso, desenvolvido com React, TypeScript, Tailwind CSS e Hono.
 
+### prévias
+
+![foto da landingpage](preview/1.png)
+
+![foto da dashboard](preview/2.png)
+
 ## Arquitetura
 
 O projeto é um monorepo contendo:
@@ -106,9 +112,3 @@ Os arquivos serão gerados nas pastas:
 
 - Frontend: `app/dist`
 - Backend: `backend/dist`
-
-### prévias
-
-![foto da landingpage](preview/1.png)
-
-![foto da dashboard](preview/2.png)
