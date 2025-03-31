@@ -106,3 +106,9 @@ Os arquivos serão gerados nas pastas:
 
 - Frontend: `app/dist`
 - Backend: `backend/dist`
+
+### prévias
+
+![foto da landingpage](1.png)
+
+![foto da dashboard](2.png)
