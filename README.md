@@ -109,6 +109,6 @@ Os arquivos serão gerados nas pastas:
 
 ### prévias
 
-![foto da landingpage](1.png)
+![foto da landingpage](preview/1.png)
 
-![foto da dashboard](2.png)
+![foto da dashboard](preview/2.png)
