@@ -64,14 +64,6 @@ O projeto é um monorepo contendo:
    - Frontend: `http://localhost:5173`
    - Backend: `http://localhost:3000`
 
-## Autenticação
-
-Para editar os dados de peso, é necessário se autenticar. A senha padrão é:
-
-```
-$Gustavo89fra
-```
-
 ## Execução com Docker
 
 1. Construa as imagens e inicie os containers:
